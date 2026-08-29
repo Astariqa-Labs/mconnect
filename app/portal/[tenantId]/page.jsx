@@ -14,8 +14,8 @@ export default function CaptivePortal() {
     const [step, setStep] = useState('selection'); 
 
     // Dynamic API URL resolution (reads from Vercel env variables, falls back to localhost)
-    const API_URL = process.env.M_SECRET_KEY || 'http://localhost:5000';
-
+    // Change this line:
+    const API_URL = process.env.M_SECRET_KEY || 'https://mconnect-back-end.onrender.com';
     const packages = [
         { id: 1, name: '1 Hour Flash', duration: '1 Hour', price: 20, description: 'Instant browsing, social media' },
         { id: 2, name: '24 Hours Unlimited', duration: '12 Hours', price: 50, description: 'Half-day streaming' },
