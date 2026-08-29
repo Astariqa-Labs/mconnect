@@ -13,6 +13,9 @@ export default function CaptivePortal() {
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState('selection'); 
 
+    // Dynamic API URL resolution (reads from Vercel env variables, falls back to localhost)
+    const API_URL = process.env.M_SECRET_KEY || 'http://localhost:5000';
+
     const packages = [
         { id: 1, name: '1 Hour Flash', duration: '1 Hour', price: 20, description: 'Instant browsing, social media' },
         { id: 2, name: '24 Hours Unlimited', duration: '12 Hours', price: 50, description: 'Half-day streaming' },
@@ -34,7 +37,7 @@ export default function CaptivePortal() {
         setStep('processing');
 
         try {
-            const response = await fetch(`http://localhost:5000/api/payments/stk-push`, {
+            const response = await fetch(`${API_URL}/api/payments/stk-push`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -121,14 +124,14 @@ export default function CaptivePortal() {
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 pl-16 pr-4 text-sm text-neutral-100 focus:outline-none focus:border-emerald-500 transition-colors tracking-wide font-medium"
                                 />
                             </div>
-                                                    </div>
+                        </div>
 
                         <button
                             type="submit"
-                            disabled={!selectedPackage || phoneNumber.length !== 9}
+                            disabled={!selectedPackage || phoneNumber.length !== 9 || loading}
                             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-neutral-800 disabled:text-neutral-600 text-black font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 text-sm tracking-wide cursor-pointer disabled:cursor-not-allowed"
                         >
-                            Connect at Full Speed
+                            {loading ? 'Processing...' : 'Connect at Full Speed'}
                         </button>
                     </form>
                 )}
