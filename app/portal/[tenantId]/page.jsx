@@ -74,7 +74,7 @@ export default function CaptivePortal() {
                     const res = await fetch(`${API_URL}/api/payments/status/${checkoutRequestId}`);
                     const data = await res.json();
 
-                    if (data.status === 'Completed' || data.success) {
+                    if (data.status === 'Completed') {
                         setStep('success');
                         clearInterval(interval);
                     } else if (data.status === 'Failed' || data.status === 'Cancelled') {
@@ -85,7 +85,7 @@ export default function CaptivePortal() {
                 } catch (err) {
                     console.error('Polling check error:', err);
                 }
-            }, 3000); // Check every 3 seconds
+            }, 3000); 
         }
 
         return () => {
