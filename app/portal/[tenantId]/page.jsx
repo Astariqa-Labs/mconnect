@@ -174,9 +174,6 @@ export default function CaptivePortal() {
                         <p className="text-sm text-neutral-400 max-w-xs mx-auto leading-relaxed">
                             M-Pesa authorization sent to <span className="text-neutral-200 font-semibold">+254 {phoneNumber}</span>. Enter your PIN.
                         </p>
-                        <p className="text-xs text-emerald-400/80 animate-pulse pt-2">
-                            Listening for payment confirmation automatically...
-                        </p>
                         
                         {/* Manual escape hatch in case they entered the wrong number */}
                         <button
