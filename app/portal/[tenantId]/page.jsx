@@ -145,6 +145,14 @@ export default function CaptivePortal() {
                         <p className="text-sm text-neutral-400 max-w-xs mx-auto leading-relaxed">
                             M-Pesa authorization sent to <span className="text-neutral-200 font-semibold">+254 {phoneNumber}</span>. Enter your PIN.
                         </p>
+                        
+                        {/* Cancel / Try Again Button */}
+                        <button
+                            onClick={() => setStep('selection')}
+                            className="mt-4 w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                        >
+                            Cancel / Try Again
+                        </button>
                     </div>
                 )}
 
