@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
 export default function CaptivePortal() {
@@ -12,6 +12,7 @@ export default function CaptivePortal() {
     const [macAddress, setMacAddress] = useState('AA:BB:CC:DD:EE:FF'); 
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState('selection'); 
+    const [checkoutRequestId, setCheckoutRequestId] = useState(null);
 
     const API_URL = 'https://mconnect-back-end.onrender.com';
     const packages = [
@@ -32,7 +33,6 @@ export default function CaptivePortal() {
         if (phoneNumber.length !== 9 || !selectedPackage) return;
 
         setLoading(true);
-        setStep('processing'); // Keep user on the processing/waiting screen
 
         try {
             const response = await fetch(`${API_URL}/api/payments/stk-push`, {
@@ -48,9 +48,9 @@ export default function CaptivePortal() {
 
             const data = await response.json();
             
-            // If response is ok or data.success is true, remain on 'processing' waiting for PIN/callback
-            if (response.ok || data.success) {
-                setStep('processing'); 
+            if (response.ok && data.checkoutRequestId) {
+                setCheckoutRequestId(data.checkoutRequestId);
+                setStep('processing'); // Enter automated polling loop
             } else {
                 alert(data.message || 'Payment initiation failed. Please try again.');
                 setStep('selection');
@@ -63,6 +63,35 @@ export default function CaptivePortal() {
             setLoading(false);
         }
     };
+
+    // AUTOMATED POLLING EFFECT: Checks payment status every 3 seconds
+    useEffect(() => {
+        let interval = null;
+
+        if (step === 'processing' && checkoutRequestId) {
+            interval = setInterval(async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/payments/status/${checkoutRequestId}`);
+                    const data = await res.json();
+
+                    if (data.status === 'Completed' || data.success) {
+                        setStep('success');
+                        clearInterval(interval);
+                    } else if (data.status === 'Failed' || data.status === 'Cancelled') {
+                        alert('Payment was cancelled or failed.');
+                        setStep('selection');
+                        clearInterval(interval);
+                    }
+                } catch (err) {
+                    console.error('Polling check error:', err);
+                }
+            }, 3000); // Check every 3 seconds
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [step, checkoutRequestId, API_URL]);
 
     return (
         <main className="min-h-screen bg-neutral-950 text-neutral-100 font-['Bricolage_Grotesque',sans-serif] flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-black">
@@ -132,12 +161,12 @@ export default function CaptivePortal() {
                             disabled={!selectedPackage || phoneNumber.length !== 9 || loading}
                             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-neutral-800 disabled:text-neutral-600 text-black font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 text-sm tracking-wide cursor-pointer disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Processing...' : 'Connect at Full Speed'}
+                            {loading ? 'Initiating STK...' : 'Connect at Full Speed'}
                         </button>
                     </form>
                 )}
 
-                {/* STEP 2: STK PUSH PROCESSING */}
+                {/* STEP 2: STK PUSH PROCESSING (AUTOMATED LISTENER) */}
                 {step === 'processing' && (
                     <div className="text-center py-8 space-y-4">
                         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -145,13 +174,16 @@ export default function CaptivePortal() {
                         <p className="text-sm text-neutral-400 max-w-xs mx-auto leading-relaxed">
                             M-Pesa authorization sent to <span className="text-neutral-200 font-semibold">+254 {phoneNumber}</span>. Enter your PIN.
                         </p>
+                        <p className="text-xs text-emerald-400/80 animate-pulse pt-2">
+                            Listening for payment confirmation automatically...
+                        </p>
                         
-                        {/* Cancel / Try Again Button */}
+                        {/* Manual escape hatch in case they entered the wrong number */}
                         <button
                             onClick={() => setStep('selection')}
-                            className="mt-4 w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                            className="mt-2 w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
                         >
-                            Cancel / Try Again
+                            Cancel / Change Number
                         </button>
                     </div>
                 )}
@@ -168,9 +200,9 @@ export default function CaptivePortal() {
                         </p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-3 rounded-xl text-sm transition-colors cursor-pointer shadow-lg shadow-emerald-500/20"
                         >
-                            Open Portal Dashboard
+                            Proceed to Internet
                         </button>
                     </div>
                 )}
