@@ -13,9 +13,7 @@ export default function CaptivePortal() {
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState('selection'); 
 
-    // Dynamic API URL resolution (reads from Vercel env variables, falls back to localhost)
-    // Change this line:
-    const API_URL = process.env.M_SECRET_KEY || 'https://mconnect-back-end.onrender.com';
+    const API_URL = 'https://mconnect-back-end.onrender.com';
     const packages = [
         { id: 1, name: '1 Hour Flash', duration: '1 Hour', price: 20, description: 'Instant browsing, social media' },
         { id: 2, name: '24 Hours Unlimited', duration: '12 Hours', price: 50, description: 'Half-day streaming' },
@@ -34,7 +32,7 @@ export default function CaptivePortal() {
         if (phoneNumber.length !== 9 || !selectedPackage) return;
 
         setLoading(true);
-        setStep('processing');
+        setStep('processing'); // Keep user on the processing/waiting screen
 
         try {
             const response = await fetch(`${API_URL}/api/payments/stk-push`, {
@@ -49,14 +47,17 @@ export default function CaptivePortal() {
             });
 
             const data = await response.json();
-            if (data.success) {
-                setStep('success');
+            
+            // If response is ok or data.success is true, remain on 'processing' waiting for PIN/callback
+            if (response.ok || data.success) {
+                setStep('processing'); 
             } else {
-                alert('Payment initiation failed. Please try again.');
+                alert(data.message || 'Payment initiation failed. Please try again.');
                 setStep('selection');
             }
         } catch (error) {
             console.error('Network error:', error);
+            alert('Network connection error.');
             setStep('selection');
         } finally {
             setLoading(false);
